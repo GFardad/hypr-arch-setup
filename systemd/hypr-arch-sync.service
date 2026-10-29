@@ -1,0 +1,6 @@
+[Unit]
+Description=hypr-arch-setup: pull + apply latest from GitHub
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/hypr-sync

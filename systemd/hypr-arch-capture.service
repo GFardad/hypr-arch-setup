@@ -1,0 +1,6 @@
+[Unit]
+Description=hypr-arch-setup: snapshot + push my config to GitHub
+
+[Service]
+Type=oneshot
+ExecStart=%h/hypr-arch-setup/scripts/capture.sh

@@ -17,6 +17,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "$REPO_ROOT/scripts/lib/common.sh"
+# shellcheck source=scripts/lib/apply.sh
+source "$REPO_ROOT/scripts/lib/apply.sh"
 
 # ---------------- categories ----------------
 # id | title | what it does | default-on for strangers?
@@ -67,6 +69,14 @@ if [[ $LIST_ONLY -eq 1 ]]; then
   exit 0
 fi
 
+cat_id() { # 1 for "id title desc def" or id, else empty
+  local want="$1" c
+  for c in "${CATEGORIES[@]}"; do
+    IFS='|' read -r cid _ _ _ <<< "$c"
+    [[ "$cid" == "$want" ]] && { echo "$c"; return 0; }
+  done
+}
+cat_count() { echo "${#CATEGORIES[@]}"; }
 # ---------------- menu ----------------
 if [[ -z "$ONLY" && $ASSUME -eq 0 ]]; then
   echo
@@ -82,20 +92,99 @@ if [[ -z "$ONLY" && $ASSUME -eq 0 ]]; then
   echo
 fi
 
-# ---------------- report ----------------
-printf '\n'
-printf '  Target : %s\n' "$(hostname)"
-printf '  User   : %s\n' "$USER"
-printf '  Mode   : %s\n' "$([[ $DRY_RUN -eq 1 ]] && echo 'dry-run (nothing changes)' || echo 'install')"
-if [[ -z "$ONLY" ]]; then
-  printf '  Pick   : %s\n' "$( [[ ${#ANSWER} -eq 0 ]] && echo 'recommended default' || echo "$ANSWER" )"
+# ---------------- defaults + selection ----------------
+RECOMMENDED=("base" "hypr" "kitty" "shell")
+
+contains() { local n="$1"; shift; local x; for x in "$@"; do [[ "$x" == "$n" ]] && return 0; done; return 1; }
+
+SELECTED=()
+if [[ -n "$ONLY" ]]; then
+  IFS=',' read -r -a want <<< "${ONLY/recommended/${RECOMMENDED[*]// /,}}"
+  for id in "${want[@]}"; do
+    [[ -z "$id" ]] && continue
+    if [[ -n "$(cat_id "$id")" ]]; then
+      SELECTED+=("$id")
+    else
+      warn "unknown category '$id' (see --list) — ignored"
+    fi
+  done
+else
+  # interactive multi-select; bad input is re-asked, not guessed at
+  while true; do
+    printf '  Pick numbers (space or comma separated), "all", or press Enter for the default: '
+    IFS= read -r pick
+    pickx="$(printf '%s' "$pick" | tr ',' ' ')"
+    if [[ -z "${pickx// /}" ]]; then SELECTED=(${RECOMMENDED[@]}); break; fi
+    if [[ "${pickx,,}" == "all" ]]; then
+      for c in "${CATEGORIES[@]}"; do SELECTED+=("${c%%|*}"); done; break
+    fi
+    nr="$(cat_count)"
+    bad=0; cur=()
+    for tok in $pickx; do
+      if [[ "$tok" =~ ^[0-9]+$ ]] && (( tok >= 1 && tok <= nr )); then
+        cur+=("$(cat_id_at "$tok")")
+      else
+        bad=1; break
+      fi
+    done
+    if (( bad == 0 )); then SELECTED=("${cur[@]}"); break; fi
+    warn "not a valid selection: '$pick' — enter numbers 1-$nr, 'all', or nothing for the default"
+  done
+fi
+
+if [[ ${#SELECTED[@]} -eq 0 ]]; then
+  echo
+  ok "nothing selected — nothing to do"
+  exit 0
+fi
+
+cat_id_at() { # $1 = 1-based index -> category id
+  local i=$1 c
+  for c in "${CATEGORIES[@]}"; do
+    (( i-- == 0 )) && { echo "${c%%|*}"; return 0; }
+  done
+}
+
+# ---------------- run ----------------
+printf '  Will install: %s\n\n' "${SELECTED[*]}"
+if [[ $DRY_RUN -eq 0 ]]; then
+  mkdir -p "$BACKUP_ROOT/backups"
+  : > "$MANIFEST.tmp"
+fi
+
+for id in "${SELECTED[@]}"; do
+  printf '\033[1;35m▸ %s\033[0m\n' "$id"
+  if "apply_$id"; then
+    INSTALLED+=("$id")
+    ok "$id done"
+  else
+    FAILED+=("$id")
+    warn "$id FAILED — see the messages above (nothing else was reverted)"
+  fi
+  echo
+done
+
+if [[ $DRY_RUN -eq 0 && ${#INSTALLED[@]} -gt 0 ]]; then
+  mv "$MANIFEST.tmp" "$MANIFEST"
+fi
+
+# ---------------- recap ----------------
+printf '\n  ── recap ──\n'
+printf '  installed : %s\n' "${INSTALLED[*]:-<none>}"
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+  printf '  FAILED    : %s\n' "${FAILED[*]}"
+fi
+if [[ $DRY_RUN -eq 0 && ${#INSTALLED[@]} -gt 0 ]]; then
+  printf '  backups   : %s\n' "$BACKUP_ROOT/backups/$TIMESTAMP"
+  printf '  manifest  : %s\n' "$MANIFEST"
 fi
 printf '\n'
 
-# ---------------- selection ----------------
-if [[ -n "$ONLY" ]]; then
-  for c in "${CATEGORIES[@]}"; do
-    IFS='|' read -r id _ _ _ <<< "$c"
-    [[ ",$ONLY," == *",$id,"* ]] && SELECTED+=("$id")
-  done
+# copy-paste reprompt for the following machines
+if [[ $DRY_RUN -eq 0 && ${#SELECTED[@]} -gt 0 ]]; then
+  printf '  Reproduce exactly this on another machine with:\n\n'
+  printf '    bash <(curl -fsSL https://raw.githubusercontent.com/%s/%s/main/bootstrap.sh) --only=%s\n\n' \
+    "$GITHUB_USER" "$REPO_NAME" "$(printf '%s\n' "${SELECTED[@]}" | paste -sd,)"
+  printf '  Set this box to pull updates every 24h with:\n\n'
+  printf '    bash $REPO_ROOT/install.sh --yes autosync,hypr,kitty,shell\n\n'
 fi
