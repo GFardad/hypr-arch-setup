@@ -1,0 +1,41 @@
+// استفاده از لایه‌ای که در مرحله قبل ساختیم به صورت پیش‌فرض
+default_layout "minimal"
+
+// تم تیره و مینیمال بدون نارنجی
+theme "minimal-dark-no-orange"
+
+themes {
+    minimal-dark-no-orange {
+        bg "#0a0a0a" 
+        fg "#d4d4d4" 
+        black "#121212"
+        red "#991b1b"
+        green "#166534"
+        yellow "#854d0e"
+        blue "#1e3a8a"
+        magenta "#701a75"
+        cyan "#155e75"
+        white "#282828"
+        // رنگ نارنجی حذف و با یک خاکستری بسیار تیره جایگزین شد
+        orange "#1a1a1a" 
+    }
+}
+
+keybinds clear-defaults=true {
+    shared_except "locked" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        
+        // جابجایی تب‌ها
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+    }
+}
+
+// تنظیمات برای شباهت ۱۰۰٪ به Kitty
+pane_frames false
+simplified_ui true      // این گزینه باعث می‌شود تب‌بار بالایی هم بسیار ساده شود
+on_force_close "detach"
+default_mode "normal"

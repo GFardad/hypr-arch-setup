@@ -1,0 +1,48 @@
+// ۱. تنظیمات رفتاری (این بخش باید در اولویت باشد)
+options {
+    pane_frames false           // حذف نوار/کادر دور صفحه
+    mouse_mode false            // واگذاری کامل کنترل موس به Kitty (حل مشکل اسکرول/سلکت)
+    simplified_ui true          // ساده‌سازی UI
+    copy_on_select false        // جلوگیری از تداخل در کپی کردن
+    scrollback_lines_max 200000 // افزایش بافر
+    theme "minimal-dark"
+    default_mode "normal"
+    on_force_close "detach"
+}
+
+// ۲. تم رنگی (که گفتی درست کار می‌کند)
+themes {
+    minimal-dark {
+        bg "#0a0a0a"
+        fg "#d4d4d4"
+        black "#1a1a1a"
+        red "#991b1b"
+        green "#166534"
+        yellow "#1a1a1a"
+        blue "#1e3a8a"
+        magenta "#701a75"
+        cyan "#155e75"
+        white "#282828"
+        orange "#1a1a1a"
+    }
+}
+
+// ۳. کلیدهای میانبر (فقط موارد درخواستی شما)
+keybinds clear-defaults=true {
+    shared_among "normal" "locked" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+    }
+}
+
+// ۴. تعریف لایه (Layout) در انتهای فایل برای انتقال تب به بالا
+layout {
+    pane size=1 borderless=true {
+        plugin location="zellij:tab-bar"
+    }
+    pane borderless=true
+}

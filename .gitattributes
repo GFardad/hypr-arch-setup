@@ -1,0 +1,32 @@
+# Capture policy for hypr-arch-setup
+# -------------------------------------------------------------
+# Text = normal git objects (diffable, mergeable, tiny).
+# Binary blobs = LFS. Only files that need to exist in the
+# "everything" clone live here; large *packages* (CJK fonts,
+# icon themes, IDE data) are named in the installer instead.
+
+# fonts
+*.ttf   filter=lfs diff=lfs merge=binary
+*.otf   filter=lfs diff=lfs merge=binary
+*.ttc   filter=lfs diff=lfs merge=binary
+*.woff* filter=lfs diff=lfs merge=binary
+*.woff  filter=lfs diff=lfs merge=binary
+*.woff2 filter=lfs diff=lfs merge=binary
+*.tar.gz filter=lfs diff=lfs merge=binary
+*.tgz   filter=lfs diff=lfs merge=binary
+*.pcf   filter=lfs diff=lfs merge=binary
+*.bdf   filter=lfs diff=lfs merge=binary
+
+# wallpapers / video
+*.mp4   filter=lfs diff=lfs merge=binary
+*.webm  filter=lfs diff=lfs merge=binary
+*.mkv   filter=lfs diff=lfs merge=binary
+*.mov   filter=lfs diff=lfs merge=binary
+*.gif   filter=lfs diff=lfs merge=binary
+*.png   filter=lfs diff=lfs merge=binary
+*.jpg   filter=lfs diff=lfs merge=binary
+
+# archives / binaries we would not hand-edit
+*.zip   filter=lfs diff=lfs merge=binary
+*.7z    filter=lfs diff=lfs merge=binary
+*.xz    filter=lfs diff=lfs merge=binary

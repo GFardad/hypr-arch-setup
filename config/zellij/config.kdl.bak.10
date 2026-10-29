@@ -1,0 +1,41 @@
+// --- OPTIONS (تنظیمات کلی) ---
+options {
+    pane_frames false
+    simplified_ui true
+    default_layout "minimal"
+    on_force_close "detach"
+    mouse_mode false
+    scrollback_lines_max 200000
+    theme "minimal-dark"
+    copy_on_select false
+    default_mode "normal"
+}
+
+// --- KEYBINDS (کلیدها) ---
+keybinds clear-defaults=true {
+    shared_among "normal" "locked" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+    }
+}
+
+// --- THEMES (تم تیره/بدون نارنجی) ---
+themes {
+    minimal-dark {
+        bg "#0a0a0a"
+        fg "#d4d4d4"
+        black "#1a1a1a"
+        red "#991b1b"
+        green "#166534"
+        yellow "#854d0e"
+        blue "#1e3a8a"
+        magenta "#701a75"
+        cyan "#155e75"
+        white "#282828"
+        orange "#1a1a1a" // جایگزین شده با رنگ پس‌زمینه
+    }
+}

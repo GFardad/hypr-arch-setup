@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Restarts mpvpaper on every ENABLED output. Idempotent (safe to re-run).
+# Used as the Sunshine prep/undo wallpaper step (~/.config/sunshine/apps.json) and
+# at boot from hyprland.conf (right after the SUNSHINE output is created).
+#
+# Order matters: the output list is resolved BEFORE anything is killed, so a
+# failure to reach hyprctl leaves the running wallpapers untouched instead of
+# blanking every screen.
+
+outputs() {
+    hyprctl -j monitors all 2>/dev/null |
+        jq -r '.[] | select(.disabled == false) | .name' 2>/dev/null
+}
+
+present=$(outputs)
+status=$?
+if [ $status -ne 0 ] || [ -z "$present" ]; then
+    echo "wallpaper.sh: cannot enumerate outputs (hyprctl unavailable?) — keeping existing wallpaper" >&2
+    exit 1
+fi
+
+# Teardown rules, both deliberate:
+#   - targets NON-empty -> kill then relaunch (idempotent re-run)
+#   - targets EMPTY     -> kill and stop (Sunshine streaming: free the VRAM)
+# The kill for the non-empty case sits directly above the launch, so a failure
+# between the two can never leave the screens blank with no replacement coming.
+
+# hwdec=nvdec is deliberate: this box has a 32-core/16-thread CPU budget to
+# spend and a hard ~800 MiB VRAM ceiling to stay under. Measured on this file,
+# one instance feeding all three outputs:
+#
+#     hwdec=no      497 MiB VRAM    60% CPU    664 MB RAM
+#     hwdec=nvdec   725 MiB VRAM    11% CPU    587 MB RAM
+#
+# Both fit the VRAM budget, but nvdec gives up 228 MiB to drop CPU by ~5x, and
+# host RAM is the resource this machine actually has to spare. Do NOT switch the
+# source back to the 4K master: decoding 4K with nvdec costs ~1857 MiB on its
+# own, which blows the budget on a single monitor. That is the reason DP-2 feeds
+# on the 1080p file too.
+#
+# Not worth revisiting, all measured as no-ops: vd-queue-enable, cuda-copy,
+# gpu-api=vulkan, gpu-context=wayland, vo=gpu-next. Software GL (LIBGL_ALWAYS_
+# SOFTWARE / forced Mesa EGL) cannot work here at all - mpv binds NVIDIA's EGL
+# directly and Mesa cannot open the DRM device.
+MPV_OPTS="hwdec=nvdec hwdec-extra-frames=0 no-audio loop panscan=1.0 --mute=yes"
+# One 1080p source for every output, including the 3840x2160 DP-2. Fed a 1:1
+# crop comparison, Lanczos-upscaled 1080p is visually indistinguishable from
+# native 4K on this content (soft fog + falling snow, no fine detail), and it
+# saves ~228 MiB per instance over decoding the 4K master.
+VID_1080="/home/gfardad/Downloads/Wallpaper/output_1080p_hevc_nvenc.mp4"
+
+# SUNSHINE = Hyprland headless output for Sunshine (DISPLAY_4K240_RUNBOOK.md §6)
+#
+# SUNSHINE is intentionally excluded: it is a headless streaming target, not a
+# physical display, and its wallpaper held ~577 MiB of VRAM 24/7. That starved
+# 8 GB GPUs (games hit NV_ERR_NO_MEMORY at startup). Streams get a black
+# background instead. Re-enable by re-adding the line below.
+declare -A VID=(
+    [DP-2]="$VID_1080"
+    [HDMI-A-5]="$VID_1080"
+    [DP-3]="$VID_1080"
+    # [SUNSHINE]="$VID_1080"
+)
+
+targets=""
+for out in $present; do
+    [ "$out" = SUNSHINE ] && continue            # hard rule: never wallpaper the stream
+    [ -n "${VID[$out]:-}" ] || continue          # unknown output: leave it alone
+    targets="${targets:+$targets }$out"
+done
+
+if [ -z "$targets" ]; then
+    # Nothing enabled that we wallpaper — i.e. the physical outputs are gone
+    # (Sunshine streaming). Free the GPU: the wallpaper cannot be shown anywhere
+    # and would otherwise hold ~650 MiB of VRAM for nothing. The watcher and the
+    # apps.json undo step both re-run this script as soon as a physical monitor
+    # returns, which repaints the wallpapers.
+    echo "wallpaper.sh: no physical output enabled - stopping wallpaper to free VRAM" >&2
+    pkill -x mpvpaper 2>/dev/null
+    pkill -x hyprpaper 2>/dev/null
+    exit 0
+fi
+
+# Feed every surface from ONE mpvpaper. mpvpaper accepts a space-separated output
+# list, so a single decoder and a single GL context back all of them instead of
+# each output getting its own. Measured on 3 outputs:
+#
+#     3 processes   855 MiB VRAM   168% CPU   1591 MB RSS
+#     1 process     497 MiB VRAM    61% CPU    715 MB RSS
+#
+# The tradeoff is blast radius: the surfaces now share one process, so if it
+# dies all wallpapers go down at once.
+#
+# This only works while every target resolves to the same file. If the map ever
+# diverges, fall back to one process per output rather than showing the wrong
+# video somewhere.
+video=""; uniform=yes
+for out in $targets; do
+    if [ -z "$video" ]; then
+        video="${VID[$out]}"
+    elif [ "${VID[$out]}" != "$video" ]; then
+        uniform=no
+    fi
+done
+
+# Safe to kill only now that targets is non-empty: from here on a replacement is
+# guaranteed to be launched. Kill any existing instances so re-runs are
+# idempotent, and make sure hyprpaper isn't holding the background layer.
+pkill -x mpvpaper 2>/dev/null
+pkill -x hyprpaper 2>/dev/null
+sleep 0.2
+
+if [ "$uniform" = yes ]; then
+    echo "wallpaper.sh: one instance for:$targets ($video)" >&2
+    mpvpaper -f -o "$MPV_OPTS" "$targets" "$video"
+else
+    echo "wallpaper.sh: outputs map to different videos; one instance per output" >&2
+    for out in $targets; do
+        mpvpaper -f -o "$MPV_OPTS" "$out" "${VID[$out]}"
+    done
+fi

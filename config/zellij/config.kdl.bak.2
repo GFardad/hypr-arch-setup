@@ -1,0 +1,13 @@
+// حذف مودهای پیچیده و جایگزینی شورت‌کات‌های شما
+keybinds {
+    unbind "Ctrl b" // غیرفعال کردن کلید پیش‌فرض
+    
+    shared_except "locked" {
+        bind "Ctrl Shift Left" { MoveTab "Left"; }
+        bind "Ctrl Shift Right" { MoveTab "Right"; }
+    }
+}
+
+// تنظیم برای باز ماندن در پس‌زمینه (Session Persistence)
+on_force_close "detach"
+pane_frames false // حذف کادرهای دور پنل‌ها برای سادگی بیشتر

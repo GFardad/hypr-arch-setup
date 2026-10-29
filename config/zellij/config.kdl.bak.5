@@ -1,0 +1,26 @@
+// ۱. افزایش ظرفیت اسکرول‌بک به ۲۰۰,۰۰۰ خط (مطابق zsh شما)
+scrollback_lines_max 200000
+
+// ۲. غیرفعال کردن مود ماوس (حیاتی برای حل مشکل سلکت و اسکرول)
+// با این کار، Zellij دیگر در کار ماوس دخالت نمی‌کند و Kitty خودش مثل همیشه کار سلکت را انجام می‌دهد
+mouse_mode false
+
+// ۳. ساده‌سازی نهایی رابط کاربری
+simplified_ui true
+pane_frames false
+
+keybinds clear-defaults=true {
+    // استفاده از Locked Mode برای اینکه Zellij کاملاً "مرده" باشد
+    // در این حالت هیچ کلیدی به جز موارد زیر توسط Zellij دزدیده نمی‌شود
+    shared_among "locked" "normal" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+    }
+}
+
+// قرار دادن دائمی روی حالت normal یا locked برای پایداری شورت‌کات‌ها
+default_mode "normal"

@@ -1,0 +1,7 @@
+### Active config reference
+# `.Hyprland-Dots/` repo removed; archive saved in `.config/hypr/dots-archive/`.
+# Active boot session: `/etc/sddm.conf` → `hyprland-uwsm.desktop` → `.config/hypr/hyprland.conf`
+## This version marker kept for reference
+## This is to have a reference of which version would be
+
+## note that this will always be higher than the released versions

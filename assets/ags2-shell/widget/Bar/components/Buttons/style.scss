@@ -1,0 +1,49 @@
+@use '../../../../style/base' as *;
+
+window#bar {
+	box.battery {
+		@include spacing(0.5);
+	}
+
+	box.batterystate {
+		@include spacing(0.5);
+
+		label {
+			font-weight: bold;
+		}
+	}
+
+  box.colorpicker {
+    @include spacing(0.5);
+    button {
+      padding: calc(var(--padding) / 2) calc(var(--padding));
+    }
+  }
+
+  button.recorder {
+    box {
+      @include spacing(0.5);
+    }
+
+    image {
+      color: color-mix(in srgb, var(--error-bg) 70%, transparent);
+    }
+
+    &:hover image {
+      color: color-mix(in srgb, var(--error-bg) 85%, transparent);
+    }
+
+    &:active image {
+      color: var(--primary-fg);
+    }
+  }
+
+  button.media {
+    box.media-content {
+      all: unset;
+      revealer label {
+        margin-left: calc(var(--spacing) / 2);
+      }
+    }
+  }
+}

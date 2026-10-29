@@ -1,0 +1,40 @@
+// بخش تنظیمات اصلی برای حذف زوائد و اصلاح رفتار
+options {
+    pane_frames false
+    simplified_ui true
+    theme "minimal-dark"
+    default_layout "minimal"
+    on_force_close "detach"
+    mouse_mode false
+    scrollback_lines_max 200000
+    copy_on_select false
+}
+
+// تعریف تم بدون رنگ نارنجی (استفاده از آبی تیره و خاکستری)
+themes {
+    minimal-dark {
+        bg "#0a0a0a"
+        fg "#d4d4d4"
+        black "#1a1a1a"
+        red "#991b1b"
+        green "#166534"
+        yellow "#854d0e"
+        blue "#1e3a8a"
+        magenta "#701a75"
+        cyan "#155e75"
+        white "#282828"
+        orange "#282828" // نارنجی با خاکستری تیره جایگزین شد
+    }
+}
+
+// تنظیم کلیدها - دقیق و محدود
+keybinds clear-defaults=true {
+    shared_among "normal" "locked" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+    }
+}

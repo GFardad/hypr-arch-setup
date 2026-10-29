@@ -1,0 +1,38 @@
+theme "minimal-faded-dark"
+
+themes {
+    minimal_faded_dark {
+        bg "#0a0a0a" 
+        fg "#8e8e8e"         // متن خاکستری ملایم (برای اوپاسیتی بصری کمتر)
+        black "#121212"
+        red "#450a0a"        // قرمز بسیار تیره و محو
+        green "#064e3b"      // سبز بسیار تیره
+        yellow "#422006"     // نارنجی/قهوه‌ای محو
+        blue "#1e3a8a"
+        // حذف مارجنتا و جایگزینی با خاکستری-سرمه‌ای تیره
+        magenta "#1e293b"    
+        cyan "#164e63"
+        white "#1a1a1a"      // رنگ المان‌های UI (بسیار نزدیک به مشکی برای محو شدن)
+        orange "#7c2d12"
+    }
+}
+
+keybinds clear-defaults=true {
+    shared_except "locked" {
+        bind "Ctrl e" { NewTab; }
+        bind "Ctrl w" { CloseTab; }
+        bind "Ctrl Shift Left" { GoToPreviousTab; }
+        bind "Ctrl Shift Right" { GoToNextTab; }
+        bind "Alt Left" { GoToPreviousTab; }
+        bind "Alt Right" { GoToNextTab; }
+    }
+}
+
+// --- تنظیمات حیاتی برای حذف UI اضافه ---
+pane_frames false
+simplified_ui true  // این گزینه تا حد زیادی شلوغی را کم می‌کند
+default_mode "normal"
+on_force_close "detach"
+
+// استفاده از Layout فشرده به صورت پیش‌فرض (برای حذف کلمه NORMAL)
+default_layout "compact"

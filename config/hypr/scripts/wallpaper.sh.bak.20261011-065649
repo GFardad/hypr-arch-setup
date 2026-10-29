@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Restarts mpvpaper on every ENABLED output. Idempotent (safe to re-run).
+# Used as the Sunshine prep/undo wallpaper step (~/.config/sunshine/apps.json) and
+# at boot from hyprland.conf (right after the SUNSHINE output is created).
+#
+# Order matters: the output list is resolved BEFORE anything is killed, so a
+# failure to reach hyprctl leaves the running wallpapers untouched instead of
+# blanking every screen.
+
+outputs() {
+    hyprctl -j monitors all 2>/dev/null |
+        jq -r '.[] | select(.disabled == false) | .name' 2>/dev/null
+}
+
+present=$(outputs)
+status=$?
+if [ $status -ne 0 ] || [ -z "$present" ]; then
+    echo "wallpaper.sh: cannot enumerate outputs (hyprctl unavailable?) — keeping existing wallpaper" >&2
+    exit 1
+fi
+
+# Kill any existing instances so re-runs are idempotent
+pkill -x mpvpaper 2>/dev/null
+# Make sure hyprpaper isn't holding the background layer
+pkill -x hyprpaper 2>/dev/null
+sleep 0.2
+
+MPV_OPTS="hwdec=auto no-audio loop panscan=1.0 --mute=yes"
+VID_4K="/home/gfardad/Downloads/Wallpaper/output_4k_hevc_nvenc.mp4"
+VID_1080="/home/gfardad/Downloads/Wallpaper/output_1080p_hevc_nvenc.mp4"
+
+# SUNSHINE = Hyprland headless output for Sunshine (DISPLAY_4K240_RUNBOOK.md §6)
+#
+# SUNSHINE is intentionally excluded: it is a headless streaming target, not a
+# physical display, and its wallpaper held ~577 MiB of VRAM 24/7. That starved
+# 8 GB GPUs (games hit NV_ERR_NO_MEMORY at startup). Streams get a black
+# background instead. Re-enable by re-adding the line below.
+declare -A VID=(
+    [DP-2]="$VID_4K"
+    [HDMI-A-5]="$VID_1080"
+    [DP-3]="$VID_1080"
+    # [SUNSHINE]="$VID_1080"
+)
+
+for out in $present; do
+    [ -n "${VID[$out]:-}" ] || continue          # unknown output: leave it alone
+    mpvpaper -f -o "$MPV_OPTS" "$out" "${VID[$out]}"
+done

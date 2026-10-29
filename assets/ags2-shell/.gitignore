@@ -1,0 +1,7 @@
+@girs/
+.config/ags/@girs/
+node_modules/
+package-lock.json
+result
+style/widgets.scss
+style/compile/main.css

@@ -1,0 +1,7 @@
+# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+# Workspace rules
+# NOTE: Basic workspace settings restored
+workspace = 1, monitor:DP-2
+workspace = 2, monitor:DP-2
+workspace = 3, monitor:DP-3
+workspace = 4, monitor:HDMI-A-5

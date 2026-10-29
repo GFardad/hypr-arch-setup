@@ -1,0 +1,47 @@
+-- /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+-- Main Lua config for Hyprland
+-- Loads all packages in ./packages/*.lua in lexical order.
+local cfg = {}
+cfg.packages_dir = os.getenv("HOME") .. "/.config/hypr/packages"
+
+-- Explicit package list in load order.
+-- This avoids os.list_dir, which is not available in Hyprland Lua.
+cfg.packages = {
+    "01-UserDefaults.lua",
+    "ENVariables.lua",
+    "SystemSettings.lua",
+    "monitors.lua",
+    "animations.lua",
+    "decorations.lua",
+    "keybinds.lua",
+    "laptops.lua",
+    "startup_apps.lua",
+    "workspace_rules.lua",
+    "window_rules.lua",
+    "laptop_display.lua",
+}
+
+local function load_packages()
+    for _, name in ipairs(cfg.packages) do
+        local path = cfg.packages_dir .. "/" .. name
+        local f = io.open(path, "r")
+        if not f then
+            io.stderr:write("[hyprland] missing package: " .. path .. "\n")
+            goto continue
+        end
+        local src = f:read("*a")
+        f:close()
+        local chunk, err = load(src, "@" .. path)
+        if not chunk then
+            io.stderr:write("[hyprland] syntax error in " .. path .. ": " .. tostring(err) .. "\n")
+            goto continue
+        end
+        local ok, run_err = pcall(chunk)
+        if not ok then
+            io.stderr:write("[hyprland] runtime error in " .. path .. ": " .. tostring(run_err) .. "\n")
+        end
+        ::continue::
+    end
+end
+
+load_packages()
