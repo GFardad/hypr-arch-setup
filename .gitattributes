@@ -23,10 +23,12 @@
 *.mkv   filter=lfs diff=lfs merge=binary
 *.mov   filter=lfs diff=lfs merge=binary
 *.gif   filter=lfs diff=lfs merge=binary
-*.png   filter=lfs diff=lfs merge=binary
 *.jpg   filter=lfs diff=lfs merge=binary
 
 # archives / binaries we would not hand-edit
 *.zip   filter=lfs diff=lfs merge=binary
 *.7z    filter=lfs diff=lfs merge=binary
 *.xz    filter=lfs diff=lfs merge=binary
+
+# wallpaper videos only (frame exports are cropping fixtures, regenerable)
+assets/wallpapers/**/*.mp4 filter=lfs diff=lfs merge=binary
